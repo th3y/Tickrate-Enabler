@@ -42,11 +42,15 @@
 #define JA_8_OPCODE 0x77
 #define JB_8_OPCODE 0x72
 #define JBE_8_OPCODE 0x76
+#define JLE_8_OPCODE 0x7E
+#define JG_8_OPCODE 0x7F
 #define JMP_8_OPCODE 0xEB
 
 #define MOV_R32_RM32_OPCODE 0x8B
 #define MOV_R32_IMM32_OPCODE 0xB8
 #define MODRM_REG_EAX_EDX 0xC2
+#define MODRM_REG_EDX_EAX 0xD0
+#define CMOVLE_PREFIX 0x0F
 
 #define MODRM_SRC_TO_DISP32(modrm) (( modrm & 0x38) | 0x05 )
 

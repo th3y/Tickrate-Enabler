@@ -44,11 +44,12 @@
 
 #include "boomervomitpatch.h"
 #include "maxrate_patches.h"
+#include "updaterate_patches.h"
 
  // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#define TE_VERSION "1.6.3"
+#define TE_VERSION "1.7.0"
 
 L4DTickRate g_L4DTickRatePlugin;
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR(L4DTickRate, IServerPluginCallbacks, INTERFACEVERSION_ISERVERPLUGINCALLBACKS, g_L4DTickRatePlugin);
@@ -65,6 +66,23 @@ ICvar* g_pCvar = NULL;
 
 CvarInfo g_ResetCvars[] = { "sv_maxrate", "sv_minrate", "net_splitpacket_maxrate" };
 size_t g_iResetCvarsCount = sizeof(g_ResetCvars) / sizeof(g_ResetCvars[0]);
+
+static void RegisterUpdateRatePatches(PatchManager& manager)
+{
+#if defined (UPDATERATE_PATCHES_AVAILABLE)
+	BaseClientUpdateRatePatch* baseClient = NULL;
+	try {
+		baseClient = new BaseClientUpdateRatePatch((BYTE*)g_pEngine);
+		GameClientUpdateRatePatch* gameClient = new GameClientUpdateRatePatch((BYTE*)g_pEngine);
+		manager.Register(baseClient);
+		manager.Register(gameClient);
+		Msg("[Tickrate_Enabler] Removed the 100/s snapshot limit, sv_maxupdaterate and the tickrate decide it.\n");
+	} catch (PatchException& e) {
+		delete baseClient;
+		Warning("[Tickrate_Enabler] Snapshot limit stays at 100/s, '%s' is not supported on this build.\n", e.GetDescription());
+	}
+#endif
+}
 
 static float Handler_GetTickInterval()
 {
@@ -115,7 +133,15 @@ bool L4DTickRate::Load(CreateInterfaceFn interfaceFactory, CreateInterfaceFn gam
 #endif
 
 		m_patchManager.Register(new ClampClientRatePatch((BYTE*)g_pEngine));
+	} catch (PatchException& e) {
+		Error("!!!!!\nPatch Failure: %s\n!!!!!\n", e.GetDescription());
+		Error("Failed to process all tickrate_enabler patches, bailing out.\n");
+		return false;
+	}
 
+	RegisterUpdateRatePatches(m_patchManager);
+
+	try {
 		m_patchManager.PatchAll();
 	} catch (PatchException& e) {
 		Error("!!!!!\nPatch Failure: %s\n!!!!!\n", e.GetDescription());

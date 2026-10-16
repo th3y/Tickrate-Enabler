@@ -7,6 +7,7 @@ project.sources += [
   'tickrate_enabler.cpp', 
   'thirdparty/memutils.cpp',
   'maxrate_patches.cpp',
+  'updaterate_patches.cpp',
   'boomervomitpatch.cpp',
 
   os.path.join(Extension.mms_root, 'core', 'sourcehook', 'sourcehook.cpp'),
